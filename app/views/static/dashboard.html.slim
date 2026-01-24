@@ -1,0 +1,231 @@
+.container-fluid.mt-5.pt-4
+  .row
+    aside.col-md-3.mb-4
+      .card.shadow-sm
+        .card-header.bg-primary.text-white
+          h5.mb-0
+            i.bi.bi-people.me-2
+            | Friends
+        .card-body.p-0
+          - if @all_users.any?
+            .list-group.list-group-flush
+              - @all_users.each do |user|
+                = link_to person_path(user), class: "list-group-item list-group-item-action d-flex align-items-center" do
+                  .avatar-circle.me-3
+                    = user.name.first.upcase
+                  span = user.name
+          - else
+            .p-3.text-center.text-muted
+              | No friends yet
+    .col-md-9
+      .card.shadow-sm
+        .card-header.bg-white.d-flex.justify-content-between.align-items-center
+          h4.mb-0
+            i.bi.bi-speedometer2.me-2
+            | Dashboard
+          .btn-group
+            button.btn.btn-primary type="button" data-bs-toggle="modal" data-bs-target="#expenseModal"
+              i.bi.bi-plus-circle.me-1
+              | Add Expense
+            = link_to new_payment_path, class: "btn btn-success" do
+              i.bi.bi-cash-coin.me-1
+              | Settle Up
+
+        .card-body
+          .row.mb-4
+            .col-md-4.mb-3
+              .card.border-0.shadow-sm class=(@total_balance >= 0 ? 'border-success' : 'border-danger')
+                .card-body.text-center
+                  .mb-2
+                    i.bi.bi-wallet2 class=(@total_balance >= 0 ? 'text-success' : 'text-danger') style="font-size: 2rem;"
+                  h6.text-muted.mb-1 Total Balance
+                  h3 class=(@total_balance >= 0 ? 'text-success' : 'text-danger')
+                    = @total_balance >= 0 ? '+' : ''
+                    = number_to_currency(@total_balance)
+            .col-md-4.mb-3
+              .card.border-0.shadow-sm.border-danger
+                .card-body.text-center
+                  .mb-2
+                    i.bi.bi-arrow-up-circle.text-danger style="font-size: 2rem;"
+                  h6.text-muted.mb-1 You Owe
+                  h3.text-danger = number_to_currency(@total_i_owe)
+            .col-md-4.mb-3
+              .card.border-0.shadow-sm.border-success
+                .card-body.text-center
+                  .mb-2
+                    i.bi.bi-arrow-down-circle.text-success style="font-size: 2rem;"
+                  h6.text-muted.mb-1 You Are Owed
+                  h3.text-success = number_to_currency(@total_owed_to_me)
+          
+          .row
+            .col-md-6.mb-4
+              .card.border-0.shadow-sm
+                .card-header.bg-danger.text-white
+                  h5.mb-0
+                    i.bi.bi-arrow-up-circle.me-2
+                    | You Owe
+                .card-body
+                  - if @friends_i_owe.any?
+                    .list-group.list-group-flush
+                      - @friends_i_owe.each do |friend, amount|
+                        = link_to person_path(friend), class: "list-group-item list-group-item-action d-flex justify-content-between align-items-center" do
+                          .d-flex.align-items-center
+                            .avatar-circle.me-3 = friend.name.first.upcase
+                            div
+                              strong = friend.name
+                              br
+                              small.text-muted = friend.email
+                          span.badge.bg-danger.rounded-pill = number_to_currency(amount)
+                  - else
+                    .text-center.text-muted.py-4
+                      i.bi.bi-check-circle style="font-size: 2rem;"
+                      p.mt-2 You don't owe anyone!
+            .col-md-6.mb-4
+              .card.border-0.shadow-sm
+                .card-header.bg-success.text-white
+                  h5.mb-0
+                    i.bi.bi-arrow-down-circle.me-2
+                    | You Are Owed
+                .card-body
+                  - if @friends_who_owe_me.any?
+                    .list-group.list-group-flush
+                      - @friends_who_owe_me.each do |friend, amount|
+                        = link_to person_path(friend), class: "list-group-item list-group-item-action d-flex justify-content-between align-items-center" do
+                          .d-flex.align-items-center
+                            .avatar-circle.me-3 = friend.name.first.upcase
+                            div
+                              strong = friend.name
+                              br
+                              small.text-muted = friend.email
+                          span.badge.bg-success.rounded-pill = number_to_currency(amount)
+                  - else
+                    .text-center.text-muted.py-4
+                      i.bi.bi-info-circle style="font-size: 2rem;"
+                      p.mt-2 No one owes you yet.
+
+          - if @my_expenses.any?
+            .card.border-0.shadow-sm.mt-4
+              .card-header.bg-white
+                h5.mb-0
+                  i.bi.bi-receipt-cutoff.me-2
+                  | Recent Expenses
+              .card-body.p-0
+                .list-group.list-group-flush
+                  - @my_expenses.each do |expense|
+                    .list-group-item.d-flex.justify-content-between.align-items-center
+                      .d-flex.align-items-center
+                        .date-badge.me-3
+                          .text-center
+                            .fw-bold.text-primary = expense.date.strftime("%b")
+                            .small = expense.date.day
+                        div
+                          strong = expense.description
+                          br
+                          small.text-muted = expense.date.strftime("%B %d, %Y")
+                      .d-flex.align-items-center
+                        .me-3
+                          strong.text-success = number_to_currency(expense.total_amount)
+                          br
+                          small.text-muted You paid
+                        = link_to expense_path(expense), method: :delete, data: { confirm: "Are you sure you want to delete this expense?" }, class: "btn btn-sm btn-outline-danger" do
+                          i.bi.bi-trash
+          - else
+            .card.border-0.shadow-sm.mt-4
+              .card-body.text-center.py-5
+                i.bi.bi-inbox style="font-size: 3rem; color: #ccc;"
+                p.text-muted.mt-3 No expenses yet. Add your first expense!
+
+#expenseModal.modal.fade aria-hidden="true" aria-labelledby="expenseModalLabel" tabindex="-1" 
+  .modal-dialog.modal-lg
+    .modal-content
+      .modal-header.bg-primary.text-white
+        h5#expenseModalLabel.modal-title
+          i.bi.bi-plus-circle.me-2
+          | Add an Expense
+        button.btn-close.btn-close-white aria-label="Close" data-bs-dismiss="modal" type="button"
+      .modal-body
+        - expense = Expense.new
+        - item = expense.expense_items.build
+        - item.expense_item_shares.build
+        - all_users = @all_users || User.where.not(id: current_user.id)
+        = form_with model: expense, url: expenses_path, local: true, id: 'expense-form' do |f|
+          
+          .mb-3
+            = f.label :description, class: "form-label fw-bold" do
+              i.bi.bi-tag.me-1
+              | Description
+            = f.text_field :description, class: "form-control", required: true, placeholder: "e.g., Dinner at Restaurant"
+
+          .row.mb-3
+            .col-md-6
+              = f.label :date, class: "form-label fw-bold" do
+                i.bi.bi-calendar.me-1
+                | Date
+              = f.date_field :date, value: Date.today, class: "form-control", required: true
+
+          hr.my-4
+
+          #expense-items
+            = f.fields_for :expense_items do |item_form|
+              .expense-item-card.mb-4.p-3.border.rounded.shadow-sm data-item-index="#{item_form.index}"
+                .d-flex.justify-content-between.align-items-center.mb-3
+                  h6.mb-0.text-primary
+                    i.bi.bi-receipt.me-2
+                    | Item #{item_form.index + 1}
+                  button.btn.btn-sm.btn-outline-danger.remove-item type="button"
+                    i.bi.bi-trash.me-1
+                    | Remove Item
+                .mb-3
+                  = item_form.label :description, "Item Description", class: "form-label"
+                  = item_form.text_field :description, class: "form-control item-description", required: true, placeholder: "e.g., Pizza"
+                .mb-3
+                  = item_form.label :amount, "Item Amount", class: "form-label"
+                  = item_form.number_field :amount, step: 0.01, min: 0, class: "form-control item-amount", required: true, placeholder: "0.00"
+                .mb-3
+                  .d-flex.justify-content-between.align-items-center.mb-2
+                    label.form-label.mb-0
+                      i.bi.bi-people.me-1
+                      | Participants
+                    button.btn.btn-sm.btn-outline-primary.add-participant-to-item type="button" data-item-index="#{item_form.index}"
+                      i.bi.bi-plus-circle.me-1
+                      | Add Participant
+                  .participants-list
+                    = item_form.fields_for :expense_item_shares do |share_form|
+                      .participant-row.mb-2.p-2.bg-light.rounded
+                        .d-flex.gap-2.align-items-center
+                          .flex-grow-1
+                            = share_form.collection_select :user_id, all_users, :id, :name, { prompt: "Select user" }, { class: "form-select user-select", required: true }
+                          .flex-grow-1
+                            = share_form.number_field :amount, step: 0.01, min: 0, class: "form-control share-amount", placeholder: "Amount", required: true
+                          button.btn.btn-sm.btn-outline-danger.remove-participant type="button"
+                            i.bi.bi-x-lg
+
+          .mb-3
+            button.btn.btn-outline-primary#add-item type="button"
+              i.bi.bi-plus-circle.me-1
+              | Add Another Item
+
+          hr.my-4
+
+          .row.mb-3
+            .col-md-6
+              = f.label :tax, class: "form-label fw-bold" do
+                i.bi.bi-percent.me-1
+                | Tax Amount
+              = f.number_field :tax, step: 0.01, min: 0, class: "form-control", value: 0, placeholder: "0.00"
+            .col-md-6
+              = f.label :tip, class: "form-label fw-bold" do
+                i.bi.bi-heart.me-1
+                | Tip Amount
+              = f.number_field :tip, step: 0.01, min: 0, class: "form-control", value: 0, placeholder: "0.00"
+
+          .alert.alert-info
+            i.bi.bi-info-circle.me-2
+            | Tax and tip will be split equally among all participants.
+
+          .modal-footer
+            button.btn.btn-secondary data-bs-dismiss="modal" type="button"
+              i.bi.bi-x-lg.me-1
+              | Cancel
+            = f.submit "Save Expense", class: "btn btn-primary"
+              i.bi.bi-check-lg.me-1

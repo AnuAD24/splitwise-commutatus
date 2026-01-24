@@ -1,0 +1,44 @@
+.container.mt-5
+  .row.justify-content-center
+    .col-md-5
+      .card.shadow-sm
+        .card-header.bg-success.text-white.text-center
+          h4.mb-0
+            i.bi.bi-shield-lock.me-2
+            | Change Your Password
+        .card-body
+          p.text-muted.text-center.mb-4
+            | Enter your new password below.
+          
+          = simple_form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put, class: "password-change-form" }) do |f|
+            = f.hidden_field :reset_password_token
+            
+            - if resource.errors.any?
+              .alert.alert-danger
+                ul.mb-0
+                  - resource.errors.full_messages.each do |message|
+                    li = message
+            
+            .mb-3
+              = f.input :password,
+                        autofocus: true,
+                        autocomplete: "new-password",
+                        input_html: { class: "form-control form-control-lg" },
+                        label: "New Password",
+                        placeholder: "Enter new password",
+                        hint: "Minimum 6 characters"
+            
+            .mb-3
+              = f.input :password_confirmation,
+                        autocomplete: "new-password",
+                        input_html: { class: "form-control form-control-lg" },
+                        label: "Confirm New Password",
+                        placeholder: "Confirm new password"
+            
+            .d-grid.gap-2
+              = f.button :submit, "Change My Password", class: "btn btn-success btn-lg"
+            
+            .text-center.mt-3
+              = link_to new_session_path(resource_name), class: "text-decoration-none" do
+                i.bi.bi-arrow-left.me-1
+                | Back to Sign In

@@ -1,0 +1,60 @@
+.container.mt-5.pt-4
+  .row.justify-content-center
+    .col-md-8
+      .card.shadow-sm
+        .card-header.bg-success.text-white
+          h4.mb-0
+            i.bi.bi-cash-coin.me-2
+            | Settle Up
+        .card-body
+          = form_with model: @payment, local: true do |f|
+            - if @payment.errors.any?
+              .alert.alert-danger
+                h5.alert-heading
+                  i.bi.bi-exclamation-triangle.me-2
+                  | Please fix the following errors:
+                ul.mb-0
+                  - @payment.errors.full_messages.each do |message|
+                    li = message
+
+            .mb-3
+              = f.label :payee_id, class: "form-label fw-bold" do
+                i.bi.bi-person-check.me-1
+                | Pay To
+              = f.collection_select :payee_id, @friends_i_owe.keys, :id, :name, { prompt: "Select friend you want to pay" }, { class: "form-select", required: true }
+              - if @friends_i_owe.any?
+                small.form-text.text-muted
+                  | You currently owe:
+                  - @friends_i_owe.each do |friend, amount|
+                    br
+                    = "#{friend.name}: #{number_to_currency(amount)}"
+              - else
+                .alert.alert-info.mt-2
+                  i.bi.bi-info-circle.me-2
+                  | You don't owe anyone at the moment.
+
+            .mb-3
+              = f.label :amount, class: "form-label fw-bold" do
+                i.bi.bi-currency-dollar.me-1
+                | Amount
+              = f.number_field :amount, step: 0.01, min: 0, class: "form-control", required: true, placeholder: "0.00"
+
+            .mb-3
+              = f.label :date, class: "form-label fw-bold" do
+                i.bi.bi-calendar.me-1
+                | Payment Date
+              = f.date_field :date, value: Date.today, class: "form-control", required: true
+
+            .mb-3
+              = f.label :notes, class: "form-label fw-bold" do
+                i.bi.bi-sticky.me-1
+                | Notes (Optional)
+              = f.text_area :notes, class: "form-control", rows: 3, placeholder: "Add any notes about this payment..."
+
+            .d-flex.justify-content-between
+              = link_to root_path, class: "btn btn-secondary" do
+                i.bi.bi-arrow-left.me-1
+                | Cancel
+              = f.submit "Record Payment", class: "btn btn-success" do
+                i.bi.bi-check-lg.me-1
+                | Record Payment

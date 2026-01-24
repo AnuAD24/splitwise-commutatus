@@ -1,0 +1,38 @@
+.container.mt-5
+  .row.justify-content-center
+    .col-md-5
+      .card.shadow-sm
+        .card-header.bg-primary.text-white.text-center
+          h4.mb-0
+            i.bi.bi-key.me-2
+            | Forgot Your Password?
+        .card-body
+          p.text-muted.text-center.mb-4
+            | Enter your email address and we'll send you a link to reset your password.
+          
+          = simple_form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post, class: "password-reset-form" }) do |f|
+            - if resource.errors.any?
+              .alert.alert-danger
+                ul.mb-0
+                  - resource.errors.full_messages.each do |message|
+                    li = message
+            
+            .mb-3
+              = f.input :email, 
+                        autofocus: true, 
+                        autocomplete: "email",
+                        input_html: { class: "form-control form-control-lg" },
+                        label: "Email address",
+                        placeholder: "Enter your email"
+            
+            .d-grid.gap-2
+              = f.button :submit, "Send Reset Instructions", class: "btn btn-primary btn-lg"
+            
+            .text-center.mt-3
+              = link_to new_session_path(resource_name), class: "text-decoration-none" do
+                i.bi.bi-arrow-left.me-1
+                | Back to Sign In
+              
+              - if devise_mapping.registerable?
+                span.mx-2 |
+                = link_to "Sign up", new_registration_path(resource_name), class: "text-decoration-none"

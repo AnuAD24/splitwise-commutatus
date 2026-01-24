@@ -1,0 +1,59 @@
+= form_with model: @expense, local: true, id: 'expense-form' do |f|
+  - if @expense.errors.any?
+    .alert.alert-danger
+      ul.mb-0
+        - @expense.errors.full_messages.each do |message|
+          li = message
+
+  .mb-3
+    = f.label :description, "Description", class: "form-label"
+    = f.text_field :description, class: "form-control", required: true
+
+  .mb-3
+    = f.label :date, "Date", class: "form-label"
+    = f.date_field :date, value: Date.today, class: "form-control", required: true
+
+  #expense-items
+    = f.fields_for :expense_items do |item_form|
+      .expense-item-card.mb-3.p-3.border.rounded
+        .d-flex.justify-content-between.align-items-center.mb-2
+          h5.mb-0 Item
+          button.btn.btn-sm.btn-danger.remove-item type="button" Remove
+        .mb-2
+          = item_form.label :description, "Item Description", class: "form-label"
+          = item_form.text_field :description, class: "form-control item-description", required: true
+        .mb-2
+          = item_form.label :amount, "Item Amount", class: "form-label"
+          = item_form.number_field :amount, step: 0.01, min: 0, class: "form-control item-amount", required: true
+        .mb-2
+          label.form-label Participants
+          .participants-list
+            = item_form.fields_for :expense_item_shares do |share_form|
+              .participant-row.mb-2
+                .d-flex.gap-2
+                  = share_form.collection_select :user_id, @all_users, :id, :name, { prompt: "Select user" }, { class: "form-select user-select" }
+                  = share_form.number_field :amount, step: 0.01, min: 0, class: "form-control share-amount", placeholder: "Amount"
+                  button.btn.btn-sm.btn-danger.remove-participant type="button" Remove
+
+  .mb-3
+    button.btn.btn-secondary#add-item type="button" Add Item
+
+  .mb-3
+    button.btn.btn-secondary#add-participant type="button" Add Participant
+
+  .row.mb-3
+    .col-md-6
+      = f.label :tax, "Tax (%)", class: "form-label"
+      = f.number_field :tax, step: 0.01, min: 0, class: "form-control", value: 0
+    .col-md-6
+      = f.label :tip, "Tip (%)", class: "form-label"
+      = f.number_field :tip, step: 0.01, min: 0, class: "form-control", value: 0
+
+  .mb-3
+    p
+      strong Total: 
+      span#total-amount $0.00
+
+  .modal-footer
+    button.btn.btn-secondary data-bs-dismiss="modal" type="button" Close
+    = f.submit "Save expense", class: "btn btn-primary"

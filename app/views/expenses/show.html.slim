@@ -1,0 +1,25 @@
+.container.mt-4
+  h1 = @expense.description
+  p
+    strong Date: 
+    = @expense.date.strftime("%B %d, %Y")
+  p
+    strong Paid by: 
+    = @expense.paid_by.name
+  p
+    strong Total: 
+    = number_to_currency(@expense.total_amount)
+  
+  h3.mt-4 Items
+  - @expense.expense_items.each do |item|
+    .card.mb-2
+      .card-body
+        p.card-text
+          strong = item.description
+          |  - #{number_to_currency(item.amount)}
+        - item.expense_item_shares.each do |share|
+          p.mb-0.small
+            = share.user.name
+            |  owes #{number_to_currency(share.amount)}
+
+  = link_to "Back", root_path, class: "btn btn-secondary"
