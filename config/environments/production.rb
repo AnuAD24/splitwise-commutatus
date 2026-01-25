@@ -49,6 +49,9 @@ Rails.application.configure do
   # config.force_ssl = true
 
   # Allow Render hosts in production.
+  if ENV["RENDER"]
+    config.hosts.clear
+  end
   config.hosts << /.*\.onrender\.com/
 
   # Include generic and useful information about system operation, but avoid logging too much
