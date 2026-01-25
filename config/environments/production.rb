@@ -48,9 +48,8 @@ Rails.application.configure do
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   # config.force_ssl = true
 
-  # Allow Render host in production.
-  config.hosts << "splitwise-commutatus-663d.onrender.com"
-  config.hosts << "splitwise-commutatus-1-gyic.onrender.com"
+  # Allow Render hosts in production.
+  config.hosts << /.*\.onrender\.com/
 
   # Include generic and useful information about system operation, but avoid logging too much
   # information to avoid inadvertent exposure of personally identifiable information (PII).
