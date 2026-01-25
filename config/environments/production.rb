@@ -51,8 +51,9 @@ Rails.application.configure do
   # Allow Render hosts in production.
   if ENV["RENDER"]
     config.hosts.clear
+    config.hosts << /.*\.onrender\.com/
   end
-  config.hosts << /.*\.onrender\.com/
+  
 
   # Include generic and useful information about system operation, but avoid logging too much
   # information to avoid inadvertent exposure of personally identifiable information (PII).
