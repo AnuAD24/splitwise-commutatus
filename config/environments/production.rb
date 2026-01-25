@@ -50,6 +50,7 @@ Rails.application.configure do
 
   # Allow Render host in production.
   config.hosts << "splitwise-commutatus-663d.onrender.com"
+  config.hosts << "splitwise-commutatus-1-gyic.onrender.com"
 
   # Include generic and useful information about system operation, but avoid logging too much
   # information to avoid inadvertent exposure of personally identifiable information (PII).
