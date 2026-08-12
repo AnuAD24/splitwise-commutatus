@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: splitwise-db
+    environment:
+      POSTGRES_USER: splitwise
+      POSTGRES_PASSWORD: splitwise
+      POSTGRES_DB: splitwise_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - splitwise_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U splitwise -d splitwise_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+    container_name: splitwise-api
+    environment:
+      DATABASE_URL: postgresql+psycopg2://splitwise:splitwise@db:5432/splitwise_dev
+      SECRET_KEY: change-me-in-production
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  web:
+    build:
+      context: ./frontend
+    container_name: splitwise-web
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+
+volumes:
+  splitwise_pgdata:
