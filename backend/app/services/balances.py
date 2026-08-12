@@ -14,31 +14,8 @@ def money(value: Decimal | float | int | None) -> Decimal:
     return Decimal(str(value)).quantize(Decimal("0.01"))
 
 
-def total_owed_to_me(db: Session, user_id: int) -> Decimal:
-    rows = (
-        db.query(ExpenseShare.amount)
-        .join(Expense, Expense.id == ExpenseShare.expense_id)
-        .filter(Expense.paid_by_id == user_id, ExpenseShare.user_id != user_id)
-        .all()
-    )
-    return money(sum((row[0] for row in rows), Decimal("0")))
-
-
-def total_i_owe(db: Session, user_id: int) -> Decimal:
-    rows = (
-        db.query(ExpenseShare.amount)
-        .join(Expense, Expense.id == ExpenseShare.expense_id)
-        .filter(ExpenseShare.user_id == user_id, Expense.paid_by_id != user_id)
-        .all()
-    )
-    return money(sum((row[0] for row in rows), Decimal("0")))
-
-
-def total_balance(db: Session, user_id: int) -> Decimal:
-    return money(total_owed_to_me(db, user_id) - total_i_owe(db, user_id))
-
-
 def balance_with(db: Session, user_id: int, friend_id: int) -> Decimal:
+    """Net balance with one friend. Positive => friend owes you; negative => you owe friend."""
     friend_owes_me = (
         db.query(ExpenseShare.amount)
         .join(Expense, Expense.id == ExpenseShare.expense_id)
@@ -56,30 +33,56 @@ def balance_with(db: Session, user_id: int, friend_id: int) -> Decimal:
     return money(owed - owing)
 
 
-def friends_i_owe(db: Session, user_id: int) -> dict[int, Decimal]:
+def net_balances_by_friend(db: Session, user_id: int) -> dict[int, Decimal]:
+    """
+    Net pairwise balances after expenses AND settle-up payments.
+    Positive amount => that friend owes you.
+    Negative amount => you owe that friend.
+    """
     rows = (
-        db.query(Expense.paid_by_id, ExpenseShare.amount)
+        db.query(Expense.paid_by_id, ExpenseShare.user_id, ExpenseShare.amount)
         .join(Expense, Expense.id == ExpenseShare.expense_id)
-        .filter(ExpenseShare.user_id == user_id, Expense.paid_by_id != user_id)
+        .filter(ExpenseShare.user_id != Expense.paid_by_id)
+        .filter((Expense.paid_by_id == user_id) | (ExpenseShare.user_id == user_id))
         .all()
     )
     totals: dict[int, Decimal] = defaultdict(lambda: Decimal("0"))
-    for payer_id, amount in rows:
-        totals[payer_id] += amount
-    return {uid: money(amount) for uid, amount in totals.items() if amount > 0}
+    for paid_by_id, share_user_id, amount in rows:
+        if paid_by_id == user_id:
+            # Friend has a share on an expense/payment you paid.
+            totals[share_user_id] += amount
+        elif share_user_id == user_id:
+            # You have a share on an expense/payment a friend paid.
+            totals[paid_by_id] -= amount
+    return {uid: money(amount) for uid, amount in totals.items() if amount != 0}
+
+
+def friends_i_owe(db: Session, user_id: int) -> dict[int, Decimal]:
+    return {
+        uid: money(abs(amount))
+        for uid, amount in net_balances_by_friend(db, user_id).items()
+        if amount < 0
+    }
 
 
 def friends_who_owe_me(db: Session, user_id: int) -> dict[int, Decimal]:
-    rows = (
-        db.query(ExpenseShare.user_id, ExpenseShare.amount)
-        .join(Expense, Expense.id == ExpenseShare.expense_id)
-        .filter(Expense.paid_by_id == user_id, ExpenseShare.user_id != user_id)
-        .all()
-    )
-    totals: dict[int, Decimal] = defaultdict(lambda: Decimal("0"))
-    for debtor_id, amount in rows:
-        totals[debtor_id] += amount
-    return {uid: money(amount) for uid, amount in totals.items() if amount > 0}
+    return {
+        uid: money(amount)
+        for uid, amount in net_balances_by_friend(db, user_id).items()
+        if amount > 0
+    }
+
+
+def total_i_owe(db: Session, user_id: int) -> Decimal:
+    return money(sum(friends_i_owe(db, user_id).values(), Decimal("0")))
+
+
+def total_owed_to_me(db: Session, user_id: int) -> Decimal:
+    return money(sum(friends_who_owe_me(db, user_id).values(), Decimal("0")))
+
+
+def total_balance(db: Session, user_id: int) -> Decimal:
+    return money(total_owed_to_me(db, user_id) - total_i_owe(db, user_id))
 
 
 def calculate_expense_shares(db: Session, expense: Expense) -> None:
