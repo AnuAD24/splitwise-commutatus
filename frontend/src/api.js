@@ -1,4 +1,5 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// Use same-origin by default so Cursor VM / remote hosts work via Vite proxy.
+const API_URL = import.meta.env.VITE_API_URL ?? ''
 
 function authHeaders(token, extra = {}) {
   return {
